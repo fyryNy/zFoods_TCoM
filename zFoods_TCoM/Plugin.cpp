@@ -44,8 +44,6 @@ namespace GOTHIC_ENGINE {
 		int end = start + iMenuItemsMax;
 		int y = 0;
 
-		std::map<string, bool_t>::iterator startIT = Foods.begin();
-
 		y = 10;
 		int xName = 10;
 		int xJill = 45;
