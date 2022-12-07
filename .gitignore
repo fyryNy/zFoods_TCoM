@@ -365,3 +365,4 @@ FodyWeavers.xsd
 *.sln.iml
 /zFoods_TCoM/*Release
 /zFoods_TCoM/*Debug
+*.vdf
