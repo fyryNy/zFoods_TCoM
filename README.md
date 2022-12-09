@@ -8,3 +8,9 @@ Plugin for The Chronicles Of Myrtana: Archolos, shows which food was already giv
 <p align="center">
 <img src="https://i.imgur.com/z9TPbx2.jpg">
 </p>
+
+## Requirements
+Union
+
+## Installation
+Put **zFoods_TCoM.vdf** from Releases page in *TCoM/Data/Plugins*
