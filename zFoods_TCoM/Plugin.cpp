@@ -45,14 +45,16 @@ namespace GOTHIC_ENGINE {
 		int y = 0;
 
 		y = 10;
-		int xName = 10;
-		int xJill = 45;
+		int xMargin = 10;
+		int xName = xMargin;
+		int xJil = 45;
 		int xEaten = 52;
-		int xCode = 63;
+
 		screenFoods->Print(F(xName), F(y), lang == Lang_Pol ? "Nazwa" : "Name");
-		screenFoods->Print(F(xJill), F(y), GetValueString("npcname_jil"));
+		screenFoods->Print(F(xJil), F(y), GetValueString("npcname_jil"));
 		screenFoods->Print(F(xEaten), F(y), lang == Lang_Pol ? "Zjedzone" : "Eaten");
-		screenFoods->Print(F(xCode), F(y), lang == Lang_Pol ? "Kod (dodaj itfo_)" : "Code (add itfo_)");
+		zSTRING sCode = lang == Lang_Pol ? "Kod (dodaj itfo_)" : "Code (add itfo_)";
+		screenFoods->Print(8192 - screenFoods->FontSize(sCode) - F(xMargin), F(y), sCode);
 
 		zSTRING sYes = lang == Lang_Pol ? "Tak" : "Yes";
 		zSTRING sNo = lang == Lang_Pol ? "Nie" : "No";
@@ -60,9 +62,9 @@ namespace GOTHIC_ENGINE {
 		for (std::map<string, bool_t>::iterator it = Foods.begin(); it != Foods.end(); it++) {
 			if (i >= start && i < end) {
 				y = base + (count * 3);
-				zSTRING foodName = "";
-				zSTRING foodGiven = "";
-				zSTRING foodEaten = "";
+				zSTRING foodName = "-";
+				zSTRING foodGiven = "-";
+				zSTRING foodEaten = "-";
 				if (it->second) {
 					foodName = GetValueString("mealname_" + it->first);
 					foodGiven = GetValueInt("nob_checkmeal_" + it->first) == 1 ? sYes : sNo;
@@ -71,32 +73,26 @@ namespace GOTHIC_ENGINE {
 				else {
 					if (it->first == "batstew") {
 						foodName = GetValueString("foodname_batstew");
-						foodGiven = "-";
 						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
 					}
 					else if (it->first == "redstew") {
 						foodName = GetValueString("foodname_redstew");
-						foodGiven = "-";
 						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
 					}
 					else if (it->first == "bluestew") {
 						foodName = GetValueString("foodname_bluestew");
-						foodGiven = "-";
 						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
 					}
 					else if (it->first == "slagermeat") {
 						foodName = GetValueString("foodname_slagermeat");
-						foodGiven = "-";
 						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
 					}
 					else if (it->first == "marthsoup") {
 						foodName = GetValueString("itemname_itfo_marthsoup");
-						foodGiven = "-";
 						foodEaten = GetValueInt("meal_marthsoup1_checkbonus") == 1 ? sYes : sNo;
 					}
 					else if (it->first == "marthsoup2") {
 						foodName = GetValueString("itemname_itfo_marthsoup2");
-						foodGiven = "-";
 						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
 					}
 					else if (it->first == "marthsoup3") {
@@ -111,24 +107,34 @@ namespace GOTHIC_ENGINE {
 					}
 				}
 
-				if (foodName.Length() > 28)
-					foodName = foodName.Cut(25, foodName.Length()) + "...";
+				int foodNameSize = screenFoods->FontSize(foodName);
+				int letterSize = foodNameSize / foodName.Length();
+
+				if (foodNameSize + F(xMargin) >= F(xJil)) {
+					int lettersToCut = (foodNameSize + F(xMargin) - F(xJil)) / letterSize + 3;
+					foodName = foodName.Cut(foodName.Length() - lettersToCut, foodName.Length()) + "...";
+				}
 
 				screenFoods->Print(F(xName), F(y), foodName);
-				screenFoods->Print(F(xJill), F(y), foodGiven);
+				screenFoods->Print(F(xJil), F(y), foodGiven);
 				screenFoods->Print(F(xEaten), F(y), foodEaten);
-				screenFoods->Print(F(xCode), F(y), it->first);
+				screenFoods->Print(8192 - screenFoods->FontSize(Z it->first) - F(xMargin), F(y), Z it->first);
 
 				count++;
 			}
 
-			if (iMenuPage > 0)
-				screenFoods->Print(F(10), F(90), "<");
-			if (iMenuPage < iMenuPageMax)
-				screenFoods->Print(8192 - F(10) - screenFoods->FontSize(Z ">"), F(90), Z ">");
-
 			i++;
 		}
+
+		zSTRING CurrentBonusCount = lang == Lang_Pol ? "Aktualny licznik bonusu" : "Current bonus counter";
+		CurrentBonusCount += +Z ": " + Z GetValueInt("meal_pointsbonus") + Z " / 5";
+		screenFoods->Print(8192 / 2 - screenFoods->FontSize(CurrentBonusCount) / 2, F(90), CurrentBonusCount);
+
+		screenFoods->SetFont("Font_20_Book.TGA");
+		if (iMenuPage > 0)
+			screenFoods->Print(F(5), F(90), "<");
+		if (iMenuPage < iMenuPageMax)
+			screenFoods->Print(8192 - F(5) - screenFoods->FontSize(Z ">"), F(90), Z ">");
 	}
 
 	void CloseMenu() {
