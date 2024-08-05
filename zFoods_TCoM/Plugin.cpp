@@ -50,9 +50,14 @@ namespace GOTHIC_ENGINE {
 		int xJil = 45;
 		int xEaten = 52;
 
+		string sEatenInfo = Z Dishes::GetCurrentEatenDishesCount() + "/" + Z Dishes::GetAllDishesCount();
+		string sGivenInfo = Z Dishes::GetCurrentGivenDishesCount() + "/" + Z Dishes::GetAllGivableCount();
+
 		screenFoods->Print(F(xName), F(y), lang == Lang_Pol ? "Nazwa" : "Name");
 		screenFoods->Print(F(xJil), F(y), GetValueString("npcname_jil"));
+		screenFoods->Print(F(xJil), (F(y)) - 200, sGivenInfo);
 		screenFoods->Print(F(xEaten), F(y), lang == Lang_Pol ? "Zjedzone" : "Eaten");
+		screenFoods->Print(F(xEaten), (F(y)) - 200, sEatenInfo);
 		zSTRING sCode = lang == Lang_Pol ? "Kod" : "Code";
 		screenFoods->Print(8192 - screenFoods->FontSize(sCode) - F(xMargin), F(y), sCode);
 
