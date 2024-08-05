@@ -27,6 +27,42 @@ namespace GOTHIC_ENGINE {
 		return val;
 	}
 
+	void DrawLetter(oCItem* renderedItem, zCViewBase* viewBase) {
+		zCView* itemView = dynamic_cast<zCView*>(viewBase);
+		if (!itemView)
+			return;
+
+		if ((renderedItem->HasFlag(ITM_CAT_FOOD))) {
+			TCoMDishVars* dish = Dishes::Find(renderedItem->GetObjectName());
+			if (!dish)
+				return;
+
+			if (dish->jilCanBuy && !GetValueInt(dish->jil)) {
+				auto letter = new zCView(6500, 5000, 8000, 7000);
+				letter->SetFontColor(zCOLOR(255, 140, 0));
+				letter->Print(0, 0, "J");
+				itemView->InsertItem(letter);
+				letter->Blit();
+				delete letter;
+			}
+
+			if (!GetValueInt(dish->eaten)) {
+				auto letter = new zCView(6500, 900, 8000, 2900);
+				letter->SetFontColor(zCOLOR(241, 196, 15));
+				letter->Print(0, 0, "B");
+				itemView->InsertItem(letter);
+				letter->Blit();
+				delete letter;
+			}
+		}
+	}
+
+	HOOK Hook_oCItem_RenderItem PATCH(&oCItem::RenderItem, &oCItem::RenderItem_Union);
+	void oCItem::RenderItem_Union(zCWorld* wld, zCViewBase* view, float rotate) {
+		DrawLetter(this, view);
+		THISCALL(Hook_oCItem_RenderItem)(wld, view, rotate);
+	}
+
 	void OpenMenu() {
 		TSystemLangID lang = Union.GetSystemLanguage();
 		bInMenu = true;
