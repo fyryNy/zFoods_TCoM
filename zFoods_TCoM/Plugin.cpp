@@ -71,16 +71,15 @@ namespace GOTHIC_ENGINE {
 
 		screen->InsertItem(screenFoods);
 		screenFoods->ClrPrintwin();
-		screenFoods->SetFont("Font_10_Book.TGA");
+		screenFoods->SetFont("Font_Default.TGA");
+		screenFoods->SetFontColor(GFX_BLACK);
 
 		int base = 15;
 		int count = 0;
 		int i = 0;
 		int start = iMenuPage * iMenuItemsMax;
 		int end = start + iMenuItemsMax;
-		int y = 0;
-
-		y = 10;
+		int y = 10;
 		int xMargin = 10;
 		int xName = xMargin;
 		int xJil = 45;
@@ -100,17 +99,44 @@ namespace GOTHIC_ENGINE {
 		zSTRING sYes = lang == Lang_Pol ? "Tak" : "Yes";
 		zSTRING sNo = lang == Lang_Pol ? "Nie" : "No";
 
+		zSTRING CurrentBonusCount = lang == Lang_Pol ? "Aktualny licznik bonusu" : "Current bonus counter";
+		CurrentBonusCount += +Z ": " + Z GetValueInt("meal_pointsbonus") + Z " / 5";
+		screenFoods->Print(8192 / 2 - screenFoods->FontSize(CurrentBonusCount) / 2, F(90), CurrentBonusCount);
+
 		for (auto it = Dishes::Data.begin(); it != Dishes::Data.end(); it++) {
 			if (i >= start && i < end) {
 				y = base + (count * 3);
 				zSTRING foodName = "-";
 				zSTRING foodGiven = "-";
+				zCOLOR foodGivenCol = GFX_BLACK;
 				zSTRING foodEaten = "-";
+				zCOLOR foodEatenCol = GFX_BLACK;
 
 				foodName = GetValueString(it->second.name);
-				foodEaten = GetValueInt(it->second.eaten) == 1 ? sYes : sNo;
+				if (GetValueInt(it->second.eaten) == 1)
+				{
+						foodEaten = sYes;
+						foodEatenCol = GFX_GREEN;
+				}
+				else
+				{
+						foodEaten = sNo;
+						foodEatenCol = GFX_RED;
+				}
+				
 				if (it->second.jilCanBuy)
-					foodGiven = GetValueInt(it->second.jil) == 1 ? sYes : sNo;
+				{
+						if (GetValueInt(it->second.jil) == 1)
+						{
+								foodGiven = sYes;
+								foodGivenCol = GFX_GREEN;
+						}
+						else
+						{
+								foodGiven = sNo;
+								foodGivenCol = GFX_RED;
+						}
+				}
 
 				int foodNameSize = screenFoods->FontSize(foodName);
 				int letterSize = foodNameSize / foodName.Length();
@@ -120,10 +146,20 @@ namespace GOTHIC_ENGINE {
 					foodName = foodName.Cut(foodName.Length() - lettersToCut, foodName.Length()) + "...";
 				}
 
+				screenFoods->SetFont("Font_10_Book.TGA");
+				screenFoods->SetFontColor(GFX_BLACK);
 				screenFoods->Print(F(xName), F(y), foodName);
-				screenFoods->Print(F(xJil), F(y), foodGiven);
-				screenFoods->Print(F(xEaten), F(y), foodEaten);
 				screenFoods->Print(8192 - screenFoods->FontSize(Z it->first) - F(xMargin), F(y), Z it->first);
+
+
+				screenFoods->SetFont("Font_Default.TGA");
+				screenFoods->SetFontColor(foodGivenCol);
+				screenFoods->Print(F(xJil), F(y), foodGiven);
+
+				screenFoods->SetFontColor(foodEatenCol);
+				screenFoods->Print(F(xEaten), F(y), foodEaten);
+
+				screenFoods->SetFontColor(GFX_BLACK);
 
 				count++;
 			}
@@ -131,11 +167,8 @@ namespace GOTHIC_ENGINE {
 			i++;
 		}
 
-		zSTRING CurrentBonusCount = lang == Lang_Pol ? "Aktualny licznik bonusu" : "Current bonus counter";
-		CurrentBonusCount += +Z ": " + Z GetValueInt("meal_pointsbonus") + Z " / 5";
-		screenFoods->Print(8192 / 2 - screenFoods->FontSize(CurrentBonusCount) / 2, F(90), CurrentBonusCount);
-
 		screenFoods->SetFont("Font_20_Book.TGA");
+
 		if (iMenuPage > 0)
 			screenFoods->Print(F(5), F(90), "<");
 		if (iMenuPage < iMenuPageMax)
@@ -177,6 +210,11 @@ namespace GOTHIC_ENGINE {
 	}
 
 	void Game_Loop() {
+			if (!ogame || ogame->IsOnPause() || !oCInformationManager::GetInformationManager().HasFinished() || player->inventory2.IsOpen())
+			{
+					return;
+			}
+
 		if (zKeyPressed(KEY_P) && !bInMenu) {
 			iMenuPage = 0;
 			iMenuPageMax = (Dishes::GetAllDishesCount() / iMenuItemsMax);
@@ -184,33 +222,33 @@ namespace GOTHIC_ENGINE {
 		}
 
 		if (bInMenu) {
-			if (zBindPressed(zLOGICKEY_LEFT) || zBindPressed(zLOGICKEY_STRAFELEFT)) {
+		if (zBindPressed(zLOGICKEY_LEFT) || zBindPressed(zLOGICKEY_STRAFELEFT)) {
 				if (iMenuPage > 0) {
-					iMenuPage--;
-					ReOpenMenu();
+						iMenuPage--;
+						ReOpenMenu();
 				}
-			}
+		}
 
 			if (zBindPressed(zLOGICKEY_RIGHT) || zBindPressed(zLOGICKEY_STRAFERIGHT)) {
 				if (iMenuPage < iMenuPageMax) {
-					iMenuPage++;
-					ReOpenMenu();
+						iMenuPage++;
+						ReOpenMenu();
 				}
-			}
+		}
 
 			if (zKeyToggled(KEY_ESCAPE) || zMouseKeyToggled(Right)) {
 				zinput->ClearKeyBuffer();
 				CloseMenu();
-			}
+		}
 
 			if (zBindPressed(zLOGICKEY_INVENTORY)
-				|| zBindPressed(zLOGICKEY_SCREEN_LOG)
-				|| zBindPressed(zLOGICKEY_SCREEN_STATUS)
-				|| zBindPressed(zLOGICKEY_SCREEN_MAP)
-				|| zBindPressed(zLOGICKEY_WEAPON)) {
+		|| zBindPressed(zLOGICKEY_SCREEN_LOG)
+		|| zBindPressed(zLOGICKEY_SCREEN_STATUS)
+		|| zBindPressed(zLOGICKEY_SCREEN_MAP)
+		|| zBindPressed(zLOGICKEY_WEAPON)) {
 				zinput->ClearKeyBuffer();
-			}
 		}
+	}
 	}
 
 	void Game_PostLoop() {
