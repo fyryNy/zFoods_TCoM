@@ -27,6 +27,42 @@ namespace GOTHIC_ENGINE {
 		return val;
 	}
 
+	void DrawLetter(oCItem* renderedItem, zCViewBase* viewBase) {
+		zCView* itemView = dynamic_cast<zCView*>(viewBase);
+		if (!itemView)
+			return;
+
+		if ((renderedItem->HasFlag(ITM_CAT_FOOD))) {
+			TCoMDishVars* dish = Dishes::Find(renderedItem->GetObjectName());
+			if (!dish)
+				return;
+
+			if (dish->jilCanBuy && !GetValueInt(dish->jil)) {
+				auto letter = new zCView(6500, 5000, 8000, 7000);
+				letter->SetFontColor(zCOLOR(255, 140, 0));
+				letter->Print(0, 0, "J");
+				itemView->InsertItem(letter);
+				letter->Blit();
+				delete letter;
+			}
+
+			if (!GetValueInt(dish->eaten)) {
+				auto letter = new zCView(6500, 900, 8000, 2900);
+				letter->SetFontColor(zCOLOR(241, 196, 15));
+				letter->Print(0, 0, "B");
+				itemView->InsertItem(letter);
+				letter->Blit();
+				delete letter;
+			}
+		}
+	}
+
+	HOOK Hook_oCItem_RenderItem PATCH(&oCItem::RenderItem, &oCItem::RenderItem_Union);
+	void oCItem::RenderItem_Union(zCWorld* wld, zCViewBase* view, float rotate) {
+		DrawLetter(this, view);
+		THISCALL(Hook_oCItem_RenderItem)(wld, view, rotate);
+	}
+
 	void OpenMenu() {
 		TSystemLangID lang = Union.GetSystemLanguage();
 		bInMenu = true;
@@ -50,62 +86,31 @@ namespace GOTHIC_ENGINE {
 		int xJil = 45;
 		int xEaten = 52;
 
+		string sEatenInfo = Z Dishes::GetCurrentEatenDishesCount() + "/" + Z Dishes::GetAllDishesCount();
+		string sGivenInfo = Z Dishes::GetCurrentGivenDishesCount() + "/" + Z Dishes::GetAllGivableCount();
+
 		screenFoods->Print(F(xName), F(y), lang == Lang_Pol ? "Nazwa" : "Name");
 		screenFoods->Print(F(xJil), F(y), GetValueString("npcname_jil"));
+		screenFoods->Print(F(xJil), (F(y)) - 200, sGivenInfo);
 		screenFoods->Print(F(xEaten), F(y), lang == Lang_Pol ? "Zjedzone" : "Eaten");
-		zSTRING sCode = lang == Lang_Pol ? "Kod (dodaj itfo_)" : "Code (add itfo_)";
+		screenFoods->Print(F(xEaten), (F(y)) - 200, sEatenInfo);
+		zSTRING sCode = lang == Lang_Pol ? "Kod" : "Code";
 		screenFoods->Print(8192 - screenFoods->FontSize(sCode) - F(xMargin), F(y), sCode);
 
 		zSTRING sYes = lang == Lang_Pol ? "Tak" : "Yes";
 		zSTRING sNo = lang == Lang_Pol ? "Nie" : "No";
 
-		for (std::map<string, bool_t>::iterator it = Foods.begin(); it != Foods.end(); it++) {
+		for (auto it = Dishes::Data.begin(); it != Dishes::Data.end(); it++) {
 			if (i >= start && i < end) {
 				y = base + (count * 3);
 				zSTRING foodName = "-";
 				zSTRING foodGiven = "-";
 				zSTRING foodEaten = "-";
-				if (it->second) {
-					foodName = GetValueString("mealname_" + it->first);
-					foodGiven = GetValueInt("nob_checkmeal_" + it->first) == 1 ? sYes : sNo;
-					foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
-				}
-				else {
-					if (it->first == "batstew") {
-						foodName = GetValueString("foodname_batstew");
-						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
-					}
-					else if (it->first == "redstew") {
-						foodName = GetValueString("foodname_redstew");
-						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
-					}
-					else if (it->first == "bluestew") {
-						foodName = GetValueString("foodname_bluestew");
-						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
-					}
-					else if (it->first == "slagermeat") {
-						foodName = GetValueString("foodname_slagermeat");
-						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
-					}
-					else if (it->first == "marthsoup") {
-						foodName = GetValueString("itemname_itfo_marthsoup");
-						foodEaten = GetValueInt("meal_marthsoup1_checkbonus") == 1 ? sYes : sNo;
-					}
-					else if (it->first == "marthsoup2") {
-						foodName = GetValueString("itemname_itfo_marthsoup2");
-						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
-					}
-					else if (it->first == "marthsoup3") {
-						foodName = GetValueString("mealname_marthastew");
-						foodGiven = GetValueInt("nob_checkmeal_marthastew") == 1 ? sYes : sNo;
-						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
-					}
-					else if (it->first == "marthsoup4") {
-						foodName = GetValueString("mealname_marthastew_str");
-						foodGiven = GetValueInt("nob_checkmeal_marthastew_str") == 1 ? sYes : sNo;
-						foodEaten = GetValueInt("meal_" + it->first + "_checkbonus") == 1 ? sYes : sNo;
-					}
-				}
+
+				foodName = GetValueString(it->second.name);
+				foodEaten = GetValueInt(it->second.eaten) == 1 ? sYes : sNo;
+				if (it->second.jilCanBuy)
+					foodGiven = GetValueInt(it->second.jil) == 1 ? sYes : sNo;
 
 				int foodNameSize = screenFoods->FontSize(foodName);
 				int letterSize = foodNameSize / foodName.Length();
@@ -163,74 +168,6 @@ namespace GOTHIC_ENGINE {
 			screenFoods->SetPos(F((100 - SizeX) / 2), F((100 - SizeY) / 2));
 			screenFoods->InsertBack("SCROLL_ELEGANT_01.tga");
 		}
-
-		Foods["pickledbeet"] = true;
-		Foods["beerbread"] = true;
-		Foods["pumpkincompote"] = true;
-		Foods["honeycookies"] = true;
-		Foods["friedfishskins"] = true;
-		Foods["scavengershashlik"] = true;
-		Foods["roastedinsects"] = true;
-		Foods["cabbagesoup"] = true;
-		Foods["mushroomcotlet"] = true;
-		Foods["dryfruitcompote"] = true;
-		Foods["fishvinegar"] = true;
-		Foods["manapermsoup"] = true;
-		Foods["sweetbun"] = true;
-		Foods["mushroomsoup"] = true;
-		Foods["rivermirtsoup"] = true;
-		Foods["speedherboysters"] = true;
-		Foods["boarstew"] = true;
-		Foods["meatmishmash"] = true;
-		Foods["ratstick"] = true;
-		Foods["mulledwisp"] = true;
-		Foods["fishcotlet"] = true;
-		Foods["fishfilletperm"] = true;
-		Foods["poorbroth"] = true;
-		Foods["herbstew"] = true;
-		Foods["meatandcheese"] = true;
-		Foods["meatandbread"] = true;
-		Foods["mushroomstew"] = true;
-		Foods["poorapplepie"] = true;
-		Foods["poorpate"] = true;
-		Foods["pickledmushrooms"] = true;
-		Foods["breadsoup"] = true;
-		Foods["shepardroast"] = true;
-		Foods["pooreggs"] = true;
-		Foods["beerfish"] = true;
-		Foods["spicypie"] = true;
-		Foods["vegepie"] = true;
-		Foods["fatstew"] = true;
-		Foods["bearstew"] = true;
-		Foods["hunterspecial"] = true;
-		Foods["speedstew"] = true;
-		Foods["smokedherbfish"] = true;
-		Foods["meatpacks"] = true;
-		Foods["herbmushroombrewing"] = true;
-		Foods["berryjam"] = true;
-		Foods["strengthjam"] = true;
-		Foods["dexdumplings"] = true;
-		Foods["simpleoysters"] = true;
-		Foods["berrycompote"] = true;
-		Foods["raspberrydrink"] = true;
-		Foods["grapejuice"] = true;
-		Foods["raspberrytincture"] = true;
-		Foods["exoticdessert"] = true;
-		Foods["applepie"] = true;
-		Foods["spicyfish"] = true;
-		Foods["herbfishsoup"] = true;
-		Foods["trollsoup"] = true;
-		Foods["weedstew"] = true;
-		Foods["fishpot"] = true;
-
-		Foods["batstew"] = false;
-		Foods["redstew"] = false;
-		Foods["bluestew"] = false;
-		Foods["slagermeat"] = false;
-		Foods["marthsoup"] = false;
-		Foods["marthsoup2"] = false;
-		Foods["marthsoup3"] = false; //nob_checkmeal_marthastew
-		Foods["marthsoup4"] = false; //nob_checkmeal_marthastew_str
 	}
 
 	void Game_Exit() {
@@ -242,7 +179,7 @@ namespace GOTHIC_ENGINE {
 	void Game_Loop() {
 		if (zKeyPressed(KEY_P) && !bInMenu) {
 			iMenuPage = 0;
-			iMenuPageMax = (static_cast<int>(Foods.size()) / iMenuItemsMax);
+			iMenuPageMax = (Dishes::GetAllDishesCount() / iMenuItemsMax);
 			OpenMenu();
 		}
 
