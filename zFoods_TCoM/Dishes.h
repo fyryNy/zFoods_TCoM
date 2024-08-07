@@ -2,6 +2,7 @@
 // Union HEADER file
 
 #include <map>
+#include <list>
 
 namespace GOTHIC_ENGINE {
 	struct TCoMDishVars {
@@ -11,13 +12,21 @@ namespace GOTHIC_ENGINE {
 		bool jilCanBuy;
 	};
 
+	struct TCoMFoodVars {
+		string name;
+		string bonus;
+		bool onlyOnce;
+		int required;
+	};
+
 	static class Dishes {
 		Dishes();
 		typedef std::map<string, TCoMDishVars, std::less<string>> MyMap;
+		typedef std::list<TCoMFoodVars> MyList;
 		static int allDishesCount;
 		static int allGivableDishesCount;
+		static int allFoodsCount;
 		static int CountGivableDishes();
-
 
 	public:
 		static int GetAllDishesCount();
@@ -26,5 +35,6 @@ namespace GOTHIC_ENGINE {
 		static int GetCurrentGivenDishesCount();
 		static TCoMDishVars* Find(const string& key);
 		static MyMap Data;
+		static MyList Foods;
 	};
 }
