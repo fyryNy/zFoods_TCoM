@@ -74,6 +74,13 @@ namespace GOTHIC_ENGINE {
 	{"ITFO_MARTHSOUP4", {"meal_marthsoup4_checkbonus", "nob_checkmeal_marthastew_str", "mealname_marthastew_str", true}}
 	};
 
+	Dishes::MyList Dishes::Foods = {
+		{"foodname_apple", "apple_bonus", false, 25},
+		{"foodname_berry_herb", "forestberry_bonus", false, 25},
+		{"throphyname_crawlermandibles", "mandibles_bonus", true, 10},
+		{"throphyname_sting", "bloodfly_bonus", true, 10}
+	};
+
 	int Dishes::allDishesCount = static_cast<int>(Dishes::Data.size());
 	int Dishes::allGivableDishesCount = Dishes::CountGivableDishes();
 

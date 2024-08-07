@@ -167,6 +167,38 @@ namespace GOTHIC_ENGINE {
 			i++;
 		}
 
+		// last page
+		if (iMenuPage == Dishes::GetAllDishesCount() / iMenuItemsMax) {
+			zSTRING bonusStr = lang == Lang_Pol ? "Bonus za: " : "Bonus for: ";
+			zSTRING onlyOnceStr = lang == Lang_Pol ? "Jednorazowy" : "Only once";
+			zSTRING multipleTimeUseStr = lang == Lang_Pol ? "Wielokrotny" : "Repeatedly";
+
+			for (const auto& food : Dishes::Foods) {
+				y = base + (++count * 3);
+				screenFoods->SetFont("Font_10_Book.TGA");
+
+				screenFoods->Print(F(xName), F(y), Z(bonusStr + GetValueString(food.name)));
+
+				int currentBousValue = GetValueInt(food.bonus);
+				if (food.onlyOnce) {
+					screenFoods->Print(F(xEaten), F(y), onlyOnceStr);
+
+					if (currentBousValue >= food.required)
+						screenFoods->SetFontColor(GFX_GREEN);
+					else
+						screenFoods->SetFontColor(GFX_RED);
+				}
+				else {
+					screenFoods->Print(F(xEaten), F(y), multipleTimeUseStr);
+				}
+
+				screenFoods->SetFont("Font_Default.TGA");
+				zSTRING amountPerMaxStr = Z currentBousValue + Z "/" + Z food.required;
+				screenFoods->Print(8192 - screenFoods->FontSize(amountPerMaxStr) - F(xMargin), F(y), amountPerMaxStr);
+				screenFoods->SetFontColor(GFX_BLACK);
+			}
+		}
+
 		screenFoods->SetFont("Font_20_Book.TGA");
 
 		if (iMenuPage > 0)
