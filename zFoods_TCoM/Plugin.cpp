@@ -27,6 +27,16 @@ namespace GOTHIC_ENGINE {
 		return val;
 	}
 
+	bool MenuPossibleToOpen() {
+		return (
+			!ogame
+			|| ogame->IsOnPause()
+			|| !oCInformationManager::GetInformationManager().HasFinished()
+			|| player->inventory2.IsOpen()
+			|| !player->IsInFightMode_S(0)
+		);
+	}
+
 	void DrawLetter(oCItem* renderedItem, zCViewBase* viewBase) {
 		zCView* itemView = dynamic_cast<zCView*>(viewBase);
 		if (!itemView)
@@ -242,7 +252,7 @@ namespace GOTHIC_ENGINE {
 	}
 
 	void Game_Loop() {
-		if (!ogame || ogame->IsOnPause() || !oCInformationManager::GetInformationManager().HasFinished() || player->inventory2.IsOpen())
+		if (!MenuPossibleToOpen())
 		{
 			return;
 		}
