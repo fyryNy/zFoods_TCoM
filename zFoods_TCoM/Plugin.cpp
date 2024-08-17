@@ -27,6 +27,16 @@ namespace GOTHIC_ENGINE {
 		return val;
 	}
 
+	bool MenuPossibleToOpen() {
+		return (
+			!ogame
+			|| ogame->IsOnPause()
+			|| !oCInformationManager::GetInformationManager().HasFinished()
+			|| player->inventory2.IsOpen()
+			|| !player->IsInFightMode_S(0)
+		);
+	}
+
 	void DrawLetter(oCItem* renderedItem, zCViewBase* viewBase) {
 		zCView* itemView = dynamic_cast<zCView*>(viewBase);
 		if (!itemView)
@@ -115,27 +125,27 @@ namespace GOTHIC_ENGINE {
 				foodName = GetValueString(it->second.name);
 				if (GetValueInt(it->second.eaten) == 1)
 				{
-						foodEaten = sYes;
-						foodEatenCol = GFX_GREEN;
+					foodEaten = sYes;
+					foodEatenCol = GFX_GREEN;
 				}
 				else
 				{
-						foodEaten = sNo;
-						foodEatenCol = GFX_RED;
+					foodEaten = sNo;
+					foodEatenCol = GFX_RED;
 				}
-				
+
 				if (it->second.jilCanBuy)
 				{
-						if (GetValueInt(it->second.jil) == 1)
-						{
-								foodGiven = sYes;
-								foodGivenCol = GFX_GREEN;
-						}
-						else
-						{
-								foodGiven = sNo;
-								foodGivenCol = GFX_RED;
-						}
+					if (GetValueInt(it->second.jil) == 1)
+					{
+						foodGiven = sYes;
+						foodGivenCol = GFX_GREEN;
+					}
+					else
+					{
+						foodGiven = sNo;
+						foodGivenCol = GFX_RED;
+					}
 				}
 
 				int foodNameSize = screenFoods->FontSize(foodName);
@@ -165,6 +175,38 @@ namespace GOTHIC_ENGINE {
 			}
 
 			i++;
+		}
+
+		// last page
+		if (iMenuPage == Dishes::GetAllDishesCount() / iMenuItemsMax) {
+			zSTRING bonusStr = lang == Lang_Pol ? "Bonus za: " : "Bonus for: ";
+			zSTRING onlyOnceStr = lang == Lang_Pol ? "Jednorazowy" : "Only once";
+			zSTRING multipleTimeUseStr = lang == Lang_Pol ? "Wielokrotny" : "Repeatedly";
+
+			for (const auto& food : Dishes::Foods) {
+				y = base + (++count * 3);
+				screenFoods->SetFont("Font_10_Book.TGA");
+
+				screenFoods->Print(F(xName), F(y), Z(bonusStr + GetValueString(food.name)));
+
+				int currentBousValue = GetValueInt(food.bonus);
+				if (food.onlyOnce) {
+					screenFoods->Print(F(xEaten), F(y), onlyOnceStr);
+
+					if (currentBousValue >= food.required)
+						screenFoods->SetFontColor(GFX_GREEN);
+					else
+						screenFoods->SetFontColor(GFX_RED);
+				}
+				else {
+					screenFoods->Print(F(xEaten), F(y), multipleTimeUseStr);
+				}
+
+				screenFoods->SetFont("Font_Default.TGA");
+				zSTRING amountPerMaxStr = Z currentBousValue + Z "/" + Z food.required;
+				screenFoods->Print(8192 - screenFoods->FontSize(amountPerMaxStr) - F(xMargin), F(y), amountPerMaxStr);
+				screenFoods->SetFontColor(GFX_BLACK);
+			}
 		}
 
 		screenFoods->SetFont("Font_20_Book.TGA");
@@ -210,10 +252,10 @@ namespace GOTHIC_ENGINE {
 	}
 
 	void Game_Loop() {
-			if (!ogame || ogame->IsOnPause() || !oCInformationManager::GetInformationManager().HasFinished() || player->inventory2.IsOpen())
-			{
-					return;
-			}
+		if (!MenuPossibleToOpen())
+		{
+			return;
+		}
 
 		if (zKeyPressed(KEY_P) && !bInMenu) {
 			iMenuPage = 0;
@@ -222,33 +264,33 @@ namespace GOTHIC_ENGINE {
 		}
 
 		if (bInMenu) {
-		if (zBindPressed(zLOGICKEY_LEFT) || zBindPressed(zLOGICKEY_STRAFELEFT)) {
+			if (zBindPressed(zLOGICKEY_LEFT) || zBindPressed(zLOGICKEY_STRAFELEFT)) {
 				if (iMenuPage > 0) {
-						iMenuPage--;
-						ReOpenMenu();
+					iMenuPage--;
+					ReOpenMenu();
 				}
-		}
+			}
 
 			if (zBindPressed(zLOGICKEY_RIGHT) || zBindPressed(zLOGICKEY_STRAFERIGHT)) {
 				if (iMenuPage < iMenuPageMax) {
-						iMenuPage++;
-						ReOpenMenu();
+					iMenuPage++;
+					ReOpenMenu();
 				}
-		}
+			}
 
 			if (zKeyToggled(KEY_ESCAPE) || zMouseKeyToggled(Right)) {
 				zinput->ClearKeyBuffer();
 				CloseMenu();
-		}
+			}
 
 			if (zBindPressed(zLOGICKEY_INVENTORY)
-		|| zBindPressed(zLOGICKEY_SCREEN_LOG)
-		|| zBindPressed(zLOGICKEY_SCREEN_STATUS)
-		|| zBindPressed(zLOGICKEY_SCREEN_MAP)
-		|| zBindPressed(zLOGICKEY_WEAPON)) {
+				|| zBindPressed(zLOGICKEY_SCREEN_LOG)
+				|| zBindPressed(zLOGICKEY_SCREEN_STATUS)
+				|| zBindPressed(zLOGICKEY_SCREEN_MAP)
+				|| zBindPressed(zLOGICKEY_WEAPON)) {
 				zinput->ClearKeyBuffer();
+			}
 		}
-	}
 	}
 
 	void Game_PostLoop() {
