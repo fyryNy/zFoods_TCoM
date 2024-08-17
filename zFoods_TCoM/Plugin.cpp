@@ -28,13 +28,17 @@ namespace GOTHIC_ENGINE {
 	}
 
 	bool MenuPossibleToOpen() {
-		return (
-			!ogame
-			|| ogame->IsOnPause()
-			|| !oCInformationManager::GetInformationManager().HasFinished()
-			|| player->inventory2.IsOpen()
-			|| !player->IsInFightMode_S(0)
-		);
+			if (
+					!ogame
+					|| ogame->IsOnPause()
+					|| !oCInformationManager::GetInformationManager().HasFinished()
+					|| player->inventory2.IsOpen()
+					|| !player->IsInFightMode_S(0)
+					)
+			{
+					return false;
+		}
+			return true;
 	}
 
 	void DrawLetter(oCItem* renderedItem, zCViewBase* viewBase) {
