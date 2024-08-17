@@ -33,7 +33,7 @@ namespace GOTHIC_ENGINE {
 			|| ogame->IsOnPause()
 			|| !oCInformationManager::GetInformationManager().HasFinished()
 			|| player->inventory2.IsOpen()
-			|| !player->IsInFightMode_S(0)
+			|| player->IsInFightMode_S(0)
 		);
 	}
 
